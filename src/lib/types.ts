@@ -9,10 +9,7 @@ export type FieldType =
   | 'git-status-input'
   | 'number'
 
-export interface FieldOption {
-  value: string
-  label: string
-}
+export type FieldOption = string | { value: string; label: string }
 
 export interface Field {
   id: string

@@ -1,6 +1,10 @@
 'use client'
-import { Command, Field, FormValues } from '@/lib/types'
+import { Command, Field, FieldOption, FormValues } from '@/lib/types'
 import GitStatusInput from './GitStatusInput'
+
+function normalizeOption(opt: FieldOption): { value: string; label: string } {
+  return typeof opt === 'string' ? { value: opt, label: opt } : opt
+}
 
 interface Props {
   command: Command
@@ -107,9 +111,9 @@ function FieldRenderer({ field, value, onChange }: FieldProps) {
           onChange={e => onChange(e.target.value)}
           className={`${baseInput} cursor-pointer`}
         >
-          {field.options?.map(opt => (
+          {field.options?.map(raw => { const opt = normalizeOption(raw); return (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          )})}
         </select>
       )
 
@@ -131,7 +135,7 @@ function FieldRenderer({ field, value, onChange }: FieldProps) {
     case 'radio':
       return (
         <div className="space-y-1.5">
-          {field.options?.map(opt => (
+          {field.options?.map(raw => { const opt = normalizeOption(raw); return (
             <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
               <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${value === opt.value ? 'border-indigo-500' : 'border-slate-600 group-hover:border-slate-400'}`}>
                 {value === opt.value && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
@@ -146,7 +150,7 @@ function FieldRenderer({ field, value, onChange }: FieldProps) {
               />
               <span className="text-sm text-slate-300 font-mono">{opt.label}</span>
             </label>
-          ))}
+          )})}
         </div>
       )
 
