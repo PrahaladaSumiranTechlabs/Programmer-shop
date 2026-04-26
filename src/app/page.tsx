@@ -28,6 +28,19 @@ const tools = [
     iconBg: 'bg-violet-500/10 text-violet-400',
   },
   {
+    id: 'mermaid-gallery',
+    href: '/tools/mermaid-gallery',
+    icon: '📊',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'Mermaid Chart Gallery',
+    description: 'Drop any .md, .mmd, or .txt file — every Mermaid diagram is auto-extracted and rendered as a zoomable image gallery. Download PNGs individually or let Gemini write a full slide deck for you.',
+    highlights: ['Supports all 20+ diagram types', 'Lightbox zoom + keyboard nav', 'Gemini-powered PPT export'],
+    gradient: 'from-pink-500/10 to-rose-500/5',
+    border: 'border-pink-500/20 hover:border-pink-500/50',
+    iconBg: 'bg-pink-500/10 text-pink-400',
+  },
+  {
     id: 'regex-tester',
     href: '#',
     icon: '🔍',
@@ -97,7 +110,7 @@ const tools = [
 const stats = [
   { value: '130+', label: 'Commands' },
   { value: '15', label: 'Categories' },
-  { value: '2', label: 'Live tools' },
+  { value: '3', label: 'Live tools' },
   { value: '100%', label: 'Free forever' },
 ]
 
@@ -146,7 +159,7 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-5 pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-sm mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Command Generator + AI Workload Calculator — both live now
+            Command Generator · AI Workload Calc · Mermaid Gallery — all live now
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 leading-tight">
