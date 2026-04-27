@@ -346,13 +346,12 @@ export default function MarkdownPDFPage() {
         : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'} />
 
       {/*
-        Root shell: uses 100dvh so mobile chrome bar is excluded.
-        overflow:hidden is critical — it prevents ANY outer scroll,
-        making the toolbar always visible and each pane scroll independently.
+        position:fixed + inset:0 locks to exact viewport regardless of
+        what body/html/Next.js wrappers do — no outer scroll possible.
       */}
       <div
         className="bg-slate-950 text-white flex flex-col"
-        style={{ height: '100dvh', overflow: 'hidden' }}
+        style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
       >
 
         {/* ── Toolbar (always visible, never scrolls) ──────── */}
