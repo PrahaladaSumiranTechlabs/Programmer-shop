@@ -54,6 +54,71 @@ const tools = [
     iconBg: 'bg-teal-500/10 text-teal-400',
   },
   {
+    id: 'base64-jwt',
+    href: '/tools/base64-jwt',
+    icon: '🔐',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'Base64 / JWT Decoder',
+    description: 'Auto-detects JWTs vs Base64. Decode JWT headers & payloads, see expiry countdowns, flag expired tokens. Encode/decode Base64 with URL-safe support. Upload any file to Base64.',
+    highlights: ['JWT expiry & claims viewer', 'Base64 encode + decode', 'URL-safe mode'],
+    gradient: 'from-yellow-500/10 to-orange-500/5',
+    border: 'border-yellow-500/20 hover:border-yellow-500/50',
+    iconBg: 'bg-yellow-500/10 text-yellow-400',
+  },
+  {
+    id: 'diff-viewer',
+    href: '/tools/diff-viewer',
+    icon: '🔀',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'Diff Viewer',
+    description: 'Paste two blocks of text, code, or JSON and get an instant line-by-line diff with green/red highlighting. Split or unified view, ignore whitespace, upload files directly.',
+    highlights: ['Split & unified view', 'Ignore whitespace toggle', 'Upload any text file'],
+    gradient: 'from-emerald-500/10 to-green-500/5',
+    border: 'border-emerald-500/20 hover:border-emerald-500/50',
+    iconBg: 'bg-emerald-500/10 text-emerald-400',
+  },
+  {
+    id: 'sql-formatter',
+    href: '/tools/sql-formatter',
+    icon: '🗄',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'SQL Formatter',
+    description: 'Paste messy SQL and get clean, indented output instantly. Supports MySQL, PostgreSQL, SQLite, T-SQL, PL/SQL and BigQuery. Configure keyword case, indent size, and more.',
+    highlights: ['7 SQL dialects', 'UPPER / lower keywords', 'Minify mode'],
+    gradient: 'from-blue-500/10 to-cyan-500/5',
+    border: 'border-blue-500/20 hover:border-blue-500/50',
+    iconBg: 'bg-blue-500/10 text-blue-400',
+  },
+  {
+    id: 'timestamp',
+    href: '/tools/timestamp',
+    icon: '⏱',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'Unix Timestamp',
+    description: 'Live Unix timestamp with one-click copy. Paste any timestamp (seconds or ms) or ISO date to decode it into every format. World clock across 8 timezones, relative time, and date picker.',
+    highlights: ['Live ticking clock', 'Auto seconds vs ms detect', 'World clock · 8 timezones'],
+    gradient: 'from-violet-500/10 to-purple-500/5',
+    border: 'border-violet-500/20 hover:border-violet-500/50',
+    iconBg: 'bg-violet-500/10 text-violet-400',
+  },
+  {
+    id: 'color-picker',
+    href: '/tools/color-picker',
+    icon: '🎨',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'Smart Color Picker',
+    description: 'Pick any color from your screen using the native EyeDropper API — grab pixels from any app or browser tab. Get HEX, RGB, HSL, CSS vars, Tailwind shades, and WCAG contrast ratios instantly.',
+    highlights: ['EyeDropper: grab any screen pixel', 'Tailwind shade palette', 'WCAG AA/AAA contrast check'],
+    gradient: 'from-fuchsia-500/10 to-pink-500/5',
+    border: 'border-fuchsia-500/20 hover:border-fuchsia-500/50',
+    iconBg: 'bg-fuchsia-500/10 text-fuchsia-400',
+  },
+  {
     id: 'regex-tester',
     href: '#',
     icon: '🔍',
@@ -123,7 +188,7 @@ const tools = [
 const stats = [
   { value: '130+', label: 'Commands' },
   { value: '15', label: 'Categories' },
-  { value: '4', label: 'Live tools' },
+  { value: '9', label: 'Live tools' },
   { value: '100%', label: 'Free forever' },
 ]
 
@@ -172,7 +237,7 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-5 pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-sm mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Command Gen · AI Workload Calc · Mermaid Gallery · Markdown PDF — all live now
+            9 live tools — Command Gen, Mermaid, Markdown PDF, JWT, Diff, SQL, Timestamp, Colors &amp; more
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 leading-tight">
@@ -376,6 +441,11 @@ export default function Home() {
             <Link href="/tools/ai-workload-calculator" className="hover:text-slate-300 transition-colors">AI Calc</Link>
             <Link href="/tools/mermaid-gallery" className="hover:text-slate-300 transition-colors">Mermaid Gallery</Link>
             <Link href="/tools/markdown-pdf" className="hover:text-slate-300 transition-colors">Markdown PDF</Link>
+            <Link href="/tools/base64-jwt" className="hover:text-slate-300 transition-colors">Base64 / JWT</Link>
+            <Link href="/tools/diff-viewer" className="hover:text-slate-300 transition-colors">Diff Viewer</Link>
+            <Link href="/tools/sql-formatter" className="hover:text-slate-300 transition-colors">SQL Formatter</Link>
+            <Link href="/tools/timestamp" className="hover:text-slate-300 transition-colors">Timestamp</Link>
+            <Link href="/tools/color-picker" className="hover:text-slate-300 transition-colors">Color Picker</Link>
             <a href="https://github.com/PrahaladaSumiranTechlabs/Programmer-shop" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">GitHub</a>
           </div>
         </div>
