@@ -5,12 +5,21 @@ import Script from 'next/script'
 import Link from 'next/link'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
+interface DiagnosticIssue {
+  severity: 'error' | 'warning'
+  message: string
+  fix: string
+}
+
 interface RenderedChart {
   index: number
   type: string
   code: string
   svgHTML: string
   error?: string
+  diagnostics?: DiagnosticIssue[]
+  fixedCode?: string
+  fixApplied?: boolean
 }
 
 declare global {
@@ -369,6 +378,123 @@ function parseSlideContent(raw: string): { title: string; bullets: string[] } {
   return { title: title || 'Diagram', bullets: bullets.slice(0, 5) }
 }
 
+/* ─── Smart diagnostics ──────────────────────────────────────────────────── */
+interface DiagnosticResult {
+  issues: DiagnosticIssue[]
+  fixedCode: string
+}
+
+const DIAGNOSTIC_RULES: {
+  test: (code: string, type: string) => DiagnosticIssue | null
+  fix: (code: string) => string
+}[] = [
+  // Markdown links [text](url) — break timeline, gantt, sequence, etc.
+  {
+    test: (code) =>
+      /\[.+?\]\(https?:\/\/.+?\)/.test(code)
+        ? {
+            severity: 'error',
+            message: 'Markdown links `[text](url)` are not valid Mermaid syntax.',
+            fix: 'Replace `[file.py](http://...)` with plain text, e.g. just `file.py`',
+          }
+        : null,
+    fix: (code) => code.replace(/\[(.+?)\]\(https?:\/\/.+?\)/g, '$1'),
+  },
+  // \n inside quoted strings (xychart axis labels)
+  {
+    test: (code, type) =>
+      (type === 'xychart-beta' || type === 'xychart') && /"[^"]*\\n[^"]*"/.test(code)
+        ? {
+            severity: 'error',
+            message: '`\\n` newlines inside axis label strings are not supported in XY charts.',
+            fix: 'Remove `\\n` from axis labels, e.g. `"Random\\ninit"` → `"Random init"`',
+          }
+        : null,
+    fix: (code) => code.replace(/"([^"]*)\\n([^"]*)"/g, (_, a, b) => `"${a} ${b}"`),
+  },
+  // Em dash — can crash certain parsers
+  {
+    test: (code, type) =>
+      ['timeline', 'gantt', 'sequenceDiagram'].includes(type) && /—/.test(code)
+        ? {
+            severity: 'warning',
+            message: 'Em dash `—` can cause parse errors in some diagram types.',
+            fix: 'Replace `—` with a regular dash `-` or `--`',
+          }
+        : null,
+    fix: (code) => code.replace(/—/g, '-'),
+  },
+  // Timeline: multi-space indented continuation lines with bad alignment
+  {
+    test: (code, type) =>
+      type === 'timeline' && /^ {8,}: /.test(code)
+        ? {
+            severity: 'warning',
+            message: 'Timeline continuation lines (`: text`) need consistent 4-space or 8-space indentation.',
+            fix: 'Normalise continuation lines to exactly 8 spaces before `:`',
+          }
+        : null,
+    fix: (code) =>
+      code
+        .split('\n')
+        .map(line => (/^ +: /.test(line) ? '        ' + line.trimStart() : line))
+        .join('\n'),
+  },
+  // HTML-style links or anchor tags
+  {
+    test: (code) =>
+      /<a\s+href/.test(code)
+        ? {
+            severity: 'error',
+            message: 'HTML anchor tags `<a href>` are not supported in diagram text.',
+            fix: 'Use plain text or Mermaid `click` interactions instead',
+          }
+        : null,
+    fix: (code) => code.replace(/<a\s[^>]*>(.+?)<\/a>/g, '$1'),
+  },
+  // Unquoted special chars in node labels (flowchart/graph)
+  {
+    test: (code, type) =>
+      ['flowchart', 'graph'].includes(type) && /\[[^\]]*[<>{}#][^\]]*\]/.test(code)
+        ? {
+            severity: 'warning',
+            message: 'Node labels containing `<`, `>`, `{`, `}`, or `#` should be wrapped in quotes.',
+            fix: 'Change `[Label with <special>]` to `["Label with <special>"]`',
+          }
+        : null,
+    fix: (code) => code, // too complex to auto-fix safely
+  },
+  // Very long single-line labels (>120 chars)
+  {
+    test: (code) => {
+      const longLine = code.split('\n').find(l => l.trim().length > 140)
+      return longLine
+        ? {
+            severity: 'warning',
+            message: `Very long line detected (${longLine.trim().length} chars). May overflow the diagram.`,
+            fix: 'Break long labels with `\\n` inside quoted strings, e.g. `["Line 1\\nLine 2"]`',
+          }
+        : null
+    },
+    fix: (code) => code,
+  },
+]
+
+function diagnose(code: string, type: string): DiagnosticResult {
+  const issues: DiagnosticIssue[] = []
+  let fixedCode = code
+
+  for (const rule of DIAGNOSTIC_RULES) {
+    const issue = rule.test(code, type)
+    if (issue) {
+      issues.push(issue)
+      fixedCode = rule.fix(fixedCode)
+    }
+  }
+
+  return { issues, fixedCode }
+}
+
 /* ─── Syntax reference data (embedded locally) ───────────────────────────── */
 const SYNTAX_GROUPS = [
   {
@@ -442,6 +568,147 @@ const COLOR_MAP: Record<string, string> = {
   amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   cyan: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
   rose: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+}
+
+/* ─── Diagnostics Panel component ───────────────────────────────────────── */
+function DiagnosticsPanel({ charts }: { charts: RenderedChart[] }) {
+  const [open, setOpen] = useState(true)
+  const ok      = charts.filter(c => !c.error)
+  const failed  = charts.filter(c => !!c.error)
+  const warned  = ok.filter(c => c.diagnostics?.length)
+  const autoFixed = charts.filter(c => c.fixApplied)
+
+  const allClean = failed.length === 0 && warned.length === 0 && autoFixed.length === 0
+  if (allClean) return null // nothing to report
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-800/30 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Diagnostics</span>
+          <div className="flex items-center gap-1.5">
+            {ok.length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {ok.length} rendered
+              </span>
+            )}
+            {autoFixed.length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                {autoFixed.length} auto-fixed
+              </span>
+            )}
+            {warned.length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                {warned.length} warnings
+              </span>
+            )}
+            {failed.length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                {failed.length} failed
+              </span>
+            )}
+          </div>
+        </div>
+        <svg
+          className={`w-4 h-4 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+        >
+          <path d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-800 divide-y divide-slate-800/60">
+          {charts.map(chart => {
+            const hasIssues = (chart.diagnostics?.length ?? 0) > 0
+            const isFailed  = !!chart.error
+            const isFixed   = !!chart.fixApplied
+
+            const rowColor = isFailed && !isFixed
+              ? 'bg-red-950/10'
+              : isFixed
+              ? 'bg-blue-950/10'
+              : hasIssues
+              ? 'bg-amber-950/10'
+              : ''
+
+            const statusIcon = isFailed && !isFixed
+              ? <span className="text-red-400">✗</span>
+              : isFixed
+              ? <span className="text-blue-400">⚡ auto-fixed</span>
+              : hasIssues
+              ? <span className="text-amber-400">⚠</span>
+              : <span className="text-emerald-400">✓</span>
+
+            return (
+              <div key={chart.index} className={`px-5 py-3 ${rowColor}`}>
+                {/* Row header */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-mono text-slate-500">#{chart.index}</span>
+                  <span className="text-xs font-bold text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded">
+                    {chart.type}
+                  </span>
+                  <span className="text-xs font-medium">{statusIcon}</span>
+                  {isFailed && !isFixed && chart.fixedCode && chart.fixedCode !== chart.code && (
+                    <span className="text-xs text-slate-500 italic">auto-fix available but render still failed</span>
+                  )}
+                </div>
+
+                {/* Error message */}
+                {isFailed && !isFixed && chart.error && (
+                  <div className="mb-2 text-xs font-mono text-red-400 bg-red-950/30 border border-red-800/30 rounded px-3 py-2 leading-relaxed break-all">
+                    {chart.error.split('\n').slice(0, 3).join('\n')}
+                  </div>
+                )}
+
+                {/* Diagnostic issues */}
+                {hasIssues && (
+                  <div className="space-y-1.5">
+                    {chart.diagnostics!.map((issue, ii) => (
+                      <div key={ii} className={`rounded-lg px-3 py-2 text-xs leading-relaxed border ${
+                        issue.severity === 'error'
+                          ? 'bg-red-950/20 border-red-800/30 text-red-300'
+                          : 'bg-amber-950/20 border-amber-800/30 text-amber-300'
+                      }`}>
+                        <div className="flex items-start gap-2">
+                          <span className="flex-shrink-0 mt-0.5">
+                            {issue.severity === 'error' ? '🔴' : '🟡'}
+                          </span>
+                          <div className="space-y-1 min-w-0">
+                            <p className="font-medium">{issue.message}</p>
+                            <p className="text-slate-400">
+                              <span className="font-semibold text-white">Fix: </span>
+                              {issue.fix}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Auto-fix banner */}
+                {isFixed && (
+                  <div className="mt-1.5 text-xs text-blue-300 bg-blue-950/20 border border-blue-800/30 rounded px-3 py-2">
+                    ⚡ Issues were automatically fixed and the diagram rendered successfully. The fixed code is shown above.
+                  </div>
+                )}
+
+                {/* Clean row — no issues */}
+                {!isFailed && !hasIssues && !isFixed && (
+                  <p className="text-xs text-slate-600">No issues detected.</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
@@ -525,15 +792,31 @@ export default function MermaidGalleryPage() {
 
     for (let i = 0; i < diagrams.length; i++) {
       const code = diagrams[i]
-      // Use a timestamp + index so IDs are always unique across re-renders
       const id = `mmd-${Date.now()}-${i}`
       const type = detectType(code)
+
+      // Run diagnostics on raw code (before any fix attempt)
+      const { issues, fixedCode } = diagnose(code, type)
+
       try {
         const { svg } = await window.mermaid.render(id, code)
-        results.push({ index: i + 1, type, code, svgHTML: svg })
+        results.push({ index: i + 1, type, code, svgHTML: svg, diagnostics: issues, fixedCode })
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        results.push({ index: i + 1, type, code, svgHTML: '', error: msg })
+
+        // Auto-fix: try rendering the cleaned version if we found fixable issues
+        if (fixedCode !== code) {
+          try {
+            const { svg } = await window.mermaid.render(`${id}-fix`, fixedCode)
+            results.push({
+              index: i + 1, type, code: fixedCode, svgHTML: svg,
+              diagnostics: issues, fixedCode, fixApplied: true,
+            })
+            continue
+          } catch { /* fall through to error */ }
+        }
+
+        results.push({ index: i + 1, type, code, svgHTML: '', error: msg, diagnostics: issues, fixedCode })
       }
     }
 
@@ -897,6 +1180,11 @@ export default function MermaidGalleryPage() {
                 })}
               </div>
             </div>
+          )}
+
+          {/* ── Diagnostics panel ────────────────────────────────────────── */}
+          {charts.length > 0 && (
+            <DiagnosticsPanel charts={charts} />
           )}
 
           {/* ── Syntax Reference (local docs) ────────────────────────────── */}
