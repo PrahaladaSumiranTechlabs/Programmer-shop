@@ -119,6 +119,19 @@ const tools = [
     iconBg: 'bg-fuchsia-500/10 text-fuchsia-400',
   },
   {
+    id: 'json-formatter',
+    href: '/tools/json-formatter',
+    icon: '{ }',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'JSON Formatter',
+    description: 'Format, minify, and explore JSON. Extracts every unique key path with type, nullability, and sample values. Infers the full schema, shows value-type distribution, nesting depth stats and more.',
+    highlights: ['All unique key paths + types', 'Schema inference', 'Stats: depth, nulls, arrays'],
+    gradient: 'from-orange-500/10 to-amber-500/5',
+    border: 'border-orange-500/20 hover:border-orange-500/50',
+    iconBg: 'bg-orange-500/10 text-orange-400',
+  },
+  {
     id: 'regex-tester',
     href: '#',
     icon: '🔍',
@@ -188,7 +201,7 @@ const tools = [
 const stats = [
   { value: '130+', label: 'Commands' },
   { value: '15', label: 'Categories' },
-  { value: '9', label: 'Live tools' },
+  { value: '10', label: 'Live tools' },
   { value: '100%', label: 'Free forever' },
 ]
 
@@ -446,6 +459,7 @@ export default function Home() {
             <Link href="/tools/sql-formatter" className="hover:text-slate-300 transition-colors">SQL Formatter</Link>
             <Link href="/tools/timestamp" className="hover:text-slate-300 transition-colors">Timestamp</Link>
             <Link href="/tools/color-picker" className="hover:text-slate-300 transition-colors">Color Picker</Link>
+            <Link href="/tools/json-formatter" className="hover:text-slate-300 transition-colors">JSON Formatter</Link>
             <a href="https://github.com/PrahaladaSumiranTechlabs/Programmer-shop" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">GitHub</a>
           </div>
         </div>
