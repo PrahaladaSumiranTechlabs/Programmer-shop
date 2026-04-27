@@ -11,7 +11,11 @@ declare global {
       setOptions: (options: Record<string, unknown>) => void
     }
     hljs: { highlightElement: (el: HTMLElement) => void }
-    html2pdf: (element: HTMLElement, options: Record<string, unknown>) => { save: () => void }
+    // html2pdf supports both legacy call and chained API
+    html2pdf: {
+      (): { set: (o: Record<string, unknown>) => { from: (el: HTMLElement) => { save: () => Promise<void> } } }
+      (el: HTMLElement, o: Record<string, unknown>): { save: () => Promise<void> }
+    }
   }
 }
 
@@ -97,20 +101,50 @@ console.log(greet('Developer'))
 *Happy documenting!* 🚀
 `
 
-function buildCSS(themeKey: ThemeKey, fontSize: string): string {
+// scopeCSS: for the live preview we prefix every rule with #mdps so our
+// styles win over Tailwind's preflight (which resets list-style, margins…).
+// For PDF export we use the same rules but wrapped in body{} instead.
+function buildScopedCSS(themeKey: ThemeKey, fontSize: string): string {
+  const t = THEMES[themeKey]
+  const S = '#mdps' // scope selector
+  return `
+    ${S} { all: initial; display: block; background: ${t.bg}; color: ${t.text}; font-family: ${t.fontFamily}; font-size: ${fontSize}; line-height: 1.7; padding: 48px 56px; box-sizing: border-box; }
+    ${S} *, ${S} *::before, ${S} *::after { box-sizing: border-box; }
+    ${S} h1,${S} h2,${S} h3,${S} h4,${S} h5,${S} h6 { color: ${t.heading}; font-weight: 600; line-height: 1.3; margin: 1.5em 0 0.5em; }
+    ${S} h1 { font-size: 2em; border-bottom: 2px solid ${t.border}; padding-bottom: 0.3em; }
+    ${S} h2 { font-size: 1.5em; border-bottom: 1px solid ${t.border}; padding-bottom: 0.25em; }
+    ${S} h3 { font-size: 1.25em; }
+    ${S} h4 { font-size: 1em; }
+    ${S} p { margin: 0.85em 0; }
+    ${S} a { color: ${t.link}; text-decoration: none; }
+    ${S} a:hover { text-decoration: underline; }
+    ${S} strong { font-weight: 700; }
+    ${S} em { font-style: italic; }
+    ${S} ul { list-style: disc; padding-left: 2em; margin: 0.85em 0; }
+    ${S} ol { list-style: decimal; padding-left: 2em; margin: 0.85em 0; }
+    ${S} li { display: list-item; margin: 0.3em 0; }
+    ${S} li > ul { list-style: circle; margin: 0.2em 0; }
+    ${S} li > ol { margin: 0.2em 0; }
+    ${S} code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 0.875em; background: ${t.code}; border: 1px solid ${t.codeBorder}; padding: 0.2em 0.4em; border-radius: 4px; }
+    ${S} pre { background: ${t.code}; border: 1px solid ${t.codeBorder}; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 1em 0; }
+    ${S} pre code { background: none; border: none; padding: 0; font-size: 0.875em; line-height: 1.6; }
+    ${S} blockquote { border-left: 4px solid ${t.link}; background: ${t.blockquoteBg}; color: ${t.blockquote}; margin: 1em 0; padding: 0.75em 1.25em; border-radius: 0 4px 4px 0; }
+    ${S} blockquote p { margin: 0.3em 0; }
+    ${S} table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: 0.95em; }
+    ${S} th, ${S} td { border: 1px solid ${t.border}; padding: 10px 14px; text-align: left; }
+    ${S} th { background: ${t.code}; font-weight: 600; color: ${t.heading}; }
+    ${S} tr:nth-child(even) td { background: ${t.blockquoteBg}; }
+    ${S} img { max-width: 100%; border-radius: 4px; }
+    ${S} hr { border: none; border-top: 2px solid ${t.border}; margin: 1.5em 0; }
+  `
+}
+
+// For PDF/print export — same rules but scoped to body (no Tailwind interference)
+function buildExportCSS(themeKey: ThemeKey, fontSize: string): string {
   const t = THEMES[themeKey]
   return `
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: ${t.bg};
-      color: ${t.text};
-      font-family: ${t.fontFamily};
-      font-size: ${fontSize};
-      line-height: 1.7;
-      padding: 48px 56px;
-      max-width: 860px;
-      margin: 0 auto;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: ${t.bg}; color: ${t.text}; font-family: ${t.fontFamily}; font-size: ${fontSize}; line-height: 1.7; padding: 48px 56px; max-width: 860px; margin: 0 auto; }
     h1,h2,h3,h4,h5,h6 { color: ${t.heading}; font-weight: 600; line-height: 1.3; margin: 1.5em 0 0.5em; }
     h1 { font-size: 2em; border-bottom: 2px solid ${t.border}; padding-bottom: 0.3em; }
     h2 { font-size: 1.5em; border-bottom: 1px solid ${t.border}; padding-bottom: 0.25em; }
@@ -118,37 +152,16 @@ function buildCSS(themeKey: ThemeKey, fontSize: string): string {
     h4 { font-size: 1em; }
     p { margin: 0.85em 0; }
     a { color: ${t.link}; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    strong { font-weight: 600; }
+    strong { font-weight: 700; }
     em { font-style: italic; }
-    ul, ol { padding-left: 2em; margin: 0.85em 0; }
-    li { margin: 0.3em 0; }
-    li > ul, li > ol { margin: 0.2em 0; }
-    code {
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-      font-size: 0.875em;
-      background: ${t.code};
-      border: 1px solid ${t.codeBorder};
-      padding: 0.2em 0.4em;
-      border-radius: 4px;
-    }
-    pre {
-      background: ${t.code};
-      border: 1px solid ${t.codeBorder};
-      border-radius: 6px;
-      padding: 16px;
-      overflow-x: auto;
-      margin: 1em 0;
-    }
+    ul { list-style: disc; padding-left: 2em; margin: 0.85em 0; }
+    ol { list-style: decimal; padding-left: 2em; margin: 0.85em 0; }
+    li { display: list-item; margin: 0.3em 0; }
+    li > ul { list-style: circle; margin: 0.2em 0; }
+    code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 0.875em; background: ${t.code}; border: 1px solid ${t.codeBorder}; padding: 0.2em 0.4em; border-radius: 4px; }
+    pre { background: ${t.code}; border: 1px solid ${t.codeBorder}; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 1em 0; }
     pre code { background: none; border: none; padding: 0; font-size: 0.875em; line-height: 1.6; }
-    blockquote {
-      border-left: 4px solid ${t.link};
-      background: ${t.blockquoteBg};
-      color: ${t.blockquote};
-      margin: 1em 0;
-      padding: 0.75em 1.25em;
-      border-radius: 0 4px 4px 0;
-    }
+    blockquote { border-left: 4px solid ${t.link}; background: ${t.blockquoteBg}; color: ${t.blockquote}; margin: 1em 0; padding: 0.75em 1.25em; border-radius: 0 4px 4px 0; }
     blockquote p { margin: 0.3em 0; }
     table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: 0.95em; }
     th, td { border: 1px solid ${t.border}; padding: 10px 14px; text-align: left; }
@@ -288,27 +301,35 @@ export default function MarkdownPDFPage() {
     if (!html2pdfReady) return
     setExporting(true)
     try {
-      const wrapper = document.createElement('div')
-      wrapper.style.cssText = `background:${THEMES[theme].bg};position:fixed;left:-9999px;top:0;`
-      const style = document.createElement('style')
-      style.textContent = buildCSS(theme, fontSize)
-      wrapper.appendChild(style)
-      const content = document.createElement('div')
-      content.innerHTML = renderedHTML
-      wrapper.appendChild(content)
-      document.body.appendChild(wrapper)
+      // Build a fully self-contained HTML page (no Tailwind, no Next.js)
+      const css = buildExportCSS(theme, fontSize)
+      const fullHTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${renderedHTML}</body></html>`
+
+      // Render into a hidden iframe so html2canvas gets a real DOM to paint
+      const iframe = document.createElement('iframe')
+      iframe.style.cssText = 'position:fixed;right:-9999px;bottom:-9999px;width:900px;height:600px;border:0;visibility:hidden;'
+      document.body.appendChild(iframe)
+
       await new Promise<void>(resolve => {
-        window.html2pdf(wrapper, {
-          margin: margins,
-          filename: `${fileName || 'document'}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: THEMES[theme].bg },
-          jsPDF: { unit: 'in', format: pageSize, orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
-        }).save()
-        setTimeout(resolve, 2500)
+        iframe.onload = () => resolve()
+        const doc = iframe.contentDocument!
+        doc.open(); doc.write(fullHTML); doc.close()
       })
-      document.body.removeChild(wrapper)
+
+      // Small settling delay so fonts/images finish loading
+      await new Promise(r => setTimeout(r, 300))
+
+      const body = iframe.contentDocument!.body
+      await window.html2pdf().set({
+        margin: margins,
+        filename: `${fileName || 'document'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: THEMES[theme].bg, logging: false },
+        jsPDF: { unit: 'in', format: pageSize, orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] },
+      }).from(body).save()
+
+      document.body.removeChild(iframe)
     } catch (err) { console.error(err) }
     setExporting(false)
   }
@@ -317,7 +338,7 @@ export default function MarkdownPDFPage() {
   function printPreview() {
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${fileName}</title><style>${buildCSS(theme, fontSize)}</style></head><body>${renderedHTML}</body></html>`)
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${fileName}</title><style>${buildExportCSS(theme, fontSize)}</style></head><body>${renderedHTML}</body></html>`)
     win.document.close()
     win.focus()
     setTimeout(() => win.print(), 400)
@@ -325,7 +346,7 @@ export default function MarkdownPDFPage() {
 
   /* ── Copy HTML ────────────────────────────────────────────── */
   function copyHTML() {
-    const html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n<style>\n${buildCSS(theme, fontSize)}\n</style>\n</head>\n<body>\n${renderedHTML}\n</body>\n</html>`
+    const html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n<style>\n${buildExportCSS(theme, fontSize)}\n</style>\n</head>\n<body>\n${renderedHTML}\n</body>\n</html>`
     navigator.clipboard.writeText(html).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -609,19 +630,13 @@ export default function MarkdownPDFPage() {
 
               {/* Preview — overflow:auto scrolls independently */}
               <div className="flex-1 overflow-auto bg-slate-800/30 p-4">
-                <div style={{
-                  background: THEMES[theme].bg,
-                  borderRadius: '10px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                  minHeight: '100%',
-                }}>
-                  <style dangerouslySetInnerHTML={{ __html: buildCSS(theme, fontSize) }} />
-                  <div
-                    ref={previewRef}
-                    dangerouslySetInnerHTML={{ __html: renderedHTML }}
-                    style={{ fontFamily: THEMES[theme].fontFamily, fontSize, color: THEMES[theme].text }}
-                  />
-                </div>
+                <style dangerouslySetInnerHTML={{ __html: buildScopedCSS(theme, fontSize) }} />
+                <div
+                  id="mdps"
+                  ref={previewRef}
+                  dangerouslySetInnerHTML={{ __html: renderedHTML }}
+                  style={{ borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', minHeight: '100%' }}
+                />
               </div>
             </div>
           )}
