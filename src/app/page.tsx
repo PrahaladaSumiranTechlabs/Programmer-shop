@@ -176,7 +176,7 @@ export default function Home() {
             repetitive parts of your workflow — instantly, in your browser.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 flex-wrap">
             <Link
               href="/tools/command-generator"
               className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/25 text-sm"
@@ -190,6 +190,13 @@ export default function Home() {
             >
               <span>🧠</span>
               AI Workload Calc
+            </Link>
+            <Link
+              href="/tools/mermaid-gallery"
+              className="flex items-center gap-2 px-6 py-3 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-pink-500/25 text-sm"
+            >
+              <span>📊</span>
+              Mermaid Gallery
             </Link>
             <a
               href="#tools"
@@ -347,6 +354,7 @@ export default function Home() {
           <div className="flex items-center gap-5">
             <Link href="/tools/command-generator" className="hover:text-slate-300 transition-colors">Command Generator</Link>
             <Link href="/tools/ai-workload-calculator" className="hover:text-slate-300 transition-colors">AI Calc</Link>
+            <Link href="/tools/mermaid-gallery" className="hover:text-slate-300 transition-colors">Mermaid Gallery</Link>
             <a href="https://github.com/PrahaladaSumiranTechlabs/Programmer-shop" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">GitHub</a>
           </div>
         </div>
