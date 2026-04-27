@@ -133,75 +133,49 @@ const tools = [
   },
   {
     id: 'regex-tester',
-    href: '#',
+    href: '/tools/regex-tester',
     icon: '🔍',
-    tag: 'Coming soon',
-    tagColor: 'bg-slate-700/50 text-slate-400 border border-slate-600/50',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
     name: 'Regex Tester',
-    description: 'Write, test and explain regular expressions with live highlighting, named groups, and reusable pattern library.',
-    highlights: ['Live match highlighting', 'Explain mode', 'Save patterns'],
+    description: 'Write and test regular expressions with live match highlighting, group captures, named groups, and a token-by-token explainer. Includes a library of 15 common patterns.',
+    highlights: ['Live highlighted matches', 'Explain mode (token breakdown)', '15 pattern presets'],
     gradient: 'from-cyan-500/10 to-blue-500/5',
-    border: 'border-slate-700/50 hover:border-slate-600',
+    border: 'border-cyan-500/20 hover:border-cyan-500/50',
     iconBg: 'bg-cyan-500/10 text-cyan-400',
   },
   {
-    id: 'json-tools',
-    href: '#',
-    icon: '{}',
-    tag: 'Coming soon',
-    tagColor: 'bg-slate-700/50 text-slate-400 border border-slate-600/50',
-    name: 'JSON Tools',
-    description: 'Format, diff, validate, query with JMESPath, and convert JSON to TypeScript types or Python dataclasses in one place.',
-    highlights: ['Format & minify', 'JSON diff viewer', 'Type generator'],
-    gradient: 'from-amber-500/10 to-orange-500/5',
-    border: 'border-slate-700/50 hover:border-slate-600',
-    iconBg: 'bg-amber-500/10 text-amber-400',
-  },
-  {
-    id: 'env-manager',
-    href: '#',
+    id: 'env-generator',
+    href: '/tools/env-generator',
     icon: '🔑',
-    tag: 'Coming soon',
-    tagColor: 'bg-slate-700/50 text-slate-400 border border-slate-600/50',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
     name: 'ENV Generator',
-    description: 'Generate .env files, validate required keys, diff environments and export Docker / Kubernetes secret manifests.',
-    highlights: ['Multi-env diff', 'Secret manifest export', '.env validator'],
+    description: 'Build .env files visually with multi-environment support (dev/staging/prod). Validates keys, diffs across envs, and exports to .env, Docker, K8s Secret, Compose, or JSON.',
+    highlights: ['Multi-env diff checker', 'Export: .env / K8s / Docker', 'Import existing .env'],
     gradient: 'from-rose-500/10 to-pink-500/5',
-    border: 'border-slate-700/50 hover:border-slate-600',
+    border: 'border-rose-500/20 hover:border-rose-500/50',
     iconBg: 'bg-rose-500/10 text-rose-400',
   },
   {
     id: 'cron-builder',
-    href: '#',
+    href: '/tools/cron-builder',
     icon: '⏰',
-    tag: 'Coming soon',
-    tagColor: 'bg-slate-700/50 text-slate-400 border border-slate-600/50',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
     name: 'Cron Builder',
-    description: 'Write and understand cron expressions visually. See the next 10 run times, convert to human language, and generate systemd timers.',
-    highlights: ['Visual schedule picker', 'Next run preview', 'systemd export'],
+    description: 'Build cron expressions visually field-by-field or type raw expressions. See next 10 run times, human-readable description, and export to systemd timer, GitHub Actions, or K8s CronJob.',
+    highlights: ['Visual field editor', 'Next 10 run times', 'Export systemd / GH Actions / K8s'],
     gradient: 'from-green-500/10 to-teal-500/5',
-    border: 'border-slate-700/50 hover:border-slate-600',
+    border: 'border-green-500/20 hover:border-green-500/50',
     iconBg: 'bg-green-500/10 text-green-400',
-  },
-  {
-    id: 'api-tester',
-    href: '#',
-    icon: '🌐',
-    tag: 'Coming soon',
-    tagColor: 'bg-slate-700/50 text-slate-400 border border-slate-600/50',
-    name: 'API Tester',
-    description: 'Lightweight Postman alternative. Send requests, inspect responses, chain calls, and export as curl commands — no account required.',
-    highlights: ['No account needed', 'curl export', 'Response diff'],
-    gradient: 'from-purple-500/10 to-violet-500/5',
-    border: 'border-slate-700/50 hover:border-slate-600',
-    iconBg: 'bg-purple-500/10 text-purple-400',
   },
 ]
 
 const stats = [
   { value: '130+', label: 'Commands' },
   { value: '15', label: 'Categories' },
-  { value: '10', label: 'Live tools' },
+  { value: '13', label: 'Live tools' },
   { value: '100%', label: 'Free forever' },
 ]
 
@@ -250,7 +224,7 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-5 pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-sm mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            9 live tools — Command Gen, Mermaid, Markdown PDF, JWT, Diff, SQL, Timestamp, Colors &amp; more
+            13 live tools — Command Gen, Mermaid, PDF, JWT, Diff, SQL, Timestamp, Colors, JSON, Regex, Cron &amp; more
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 leading-tight">
@@ -460,6 +434,9 @@ export default function Home() {
             <Link href="/tools/timestamp" className="hover:text-slate-300 transition-colors">Timestamp</Link>
             <Link href="/tools/color-picker" className="hover:text-slate-300 transition-colors">Color Picker</Link>
             <Link href="/tools/json-formatter" className="hover:text-slate-300 transition-colors">JSON Formatter</Link>
+            <Link href="/tools/regex-tester" className="hover:text-slate-300 transition-colors">Regex Tester</Link>
+            <Link href="/tools/env-generator" className="hover:text-slate-300 transition-colors">ENV Generator</Link>
+            <Link href="/tools/cron-builder" className="hover:text-slate-300 transition-colors">Cron Builder</Link>
             <a href="https://github.com/PrahaladaSumiranTechlabs/Programmer-shop" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">GitHub</a>
           </div>
         </div>
