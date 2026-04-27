@@ -41,6 +41,19 @@ const tools = [
     iconBg: 'bg-pink-500/10 text-pink-400',
   },
   {
+    id: 'markdown-pdf',
+    href: '/tools/markdown-pdf',
+    icon: '📄',
+    tag: 'Live',
+    tagColor: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    name: 'Markdown → PDF',
+    description: 'Paste or upload any .md file and download a beautifully styled PDF — 5 themes, syntax-highlighted code blocks, tables, and custom page settings. No uploads, fully in-browser.',
+    highlights: ['5 themes: GitHub, Dark, Notion…', 'Syntax-highlighted code', 'A4 / Letter / A3 export'],
+    gradient: 'from-teal-500/10 to-cyan-500/5',
+    border: 'border-teal-500/20 hover:border-teal-500/50',
+    iconBg: 'bg-teal-500/10 text-teal-400',
+  },
+  {
     id: 'regex-tester',
     href: '#',
     icon: '🔍',
@@ -110,7 +123,7 @@ const tools = [
 const stats = [
   { value: '130+', label: 'Commands' },
   { value: '15', label: 'Categories' },
-  { value: '3', label: 'Live tools' },
+  { value: '4', label: 'Live tools' },
   { value: '100%', label: 'Free forever' },
 ]
 
@@ -159,7 +172,7 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-5 pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-sm mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Command Generator · AI Workload Calc · Mermaid Gallery — all live now
+            Command Gen · AI Workload Calc · Mermaid Gallery · Markdown PDF — all live now
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 leading-tight">
@@ -197,6 +210,13 @@ export default function Home() {
             >
               <span>📊</span>
               Mermaid Gallery
+            </Link>
+            <Link
+              href="/tools/markdown-pdf"
+              className="flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-teal-500/25 text-sm"
+            >
+              <span>📄</span>
+              Markdown PDF
             </Link>
             <a
               href="#tools"
@@ -355,6 +375,7 @@ export default function Home() {
             <Link href="/tools/command-generator" className="hover:text-slate-300 transition-colors">Command Generator</Link>
             <Link href="/tools/ai-workload-calculator" className="hover:text-slate-300 transition-colors">AI Calc</Link>
             <Link href="/tools/mermaid-gallery" className="hover:text-slate-300 transition-colors">Mermaid Gallery</Link>
+            <Link href="/tools/markdown-pdf" className="hover:text-slate-300 transition-colors">Markdown PDF</Link>
             <a href="https://github.com/PrahaladaSumiranTechlabs/Programmer-shop" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300 transition-colors">GitHub</a>
           </div>
         </div>
