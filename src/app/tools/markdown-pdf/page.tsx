@@ -190,7 +190,7 @@ export default function MarkdownPDFPage() {
   const [copied, setCopied] = useState(false)
   const [view, setView] = useState<'split' | 'preview' | 'editor'>('split')
   const [pageSize, setPageSize] = useState<'a4' | 'letter' | 'a3'>('a4')
-  const [margins, setMargins] = useState('1in')
+  const [margins, setMargins] = useState(1) // in inches — must be a number, not a string
   const [fileName, setFileName] = useState('document')
   const [showSettings, setShowSettings] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
@@ -468,11 +468,12 @@ export default function MarkdownPDFPage() {
 
                 <label className="flex flex-col gap-1">
                   <span className="text-xs text-slate-500">Margins</span>
-                  <select value={margins} onChange={e => setMargins(e.target.value)}
+                  <select value={margins} onChange={e => setMargins(Number(e.target.value))}
                     className="text-xs bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                    <option value="0.5in">Narrow (0.5 in)</option>
-                    <option value="1in">Normal (1 in)</option>
-                    <option value="1.25in">Wide (1.25 in)</option>
+                    <option value={0.25}>None (0.25 in)</option>
+                    <option value={0.5}>Narrow (0.5 in)</option>
+                    <option value={1}>Normal (1 in)</option>
+                    <option value={1.25}>Wide (1.25 in)</option>
                   </select>
                 </label>
               </div>
@@ -648,7 +649,7 @@ export default function MarkdownPDFPage() {
           <span>·</span>
           <span className="shrink-0">Theme: {THEMES[theme].name}</span>
           <span>·</span>
-          <span className="shrink-0">Page: {pageSize.toUpperCase()} · Margins: {margins} · Font: {fontSize}</span>
+          <span className="shrink-0">Page: {pageSize.toUpperCase()} · Margins: {margins}in · Font: {fontSize}</span>
           {view === 'split' && (
             <><span>·</span><span className="shrink-0">Split: {Math.round(splitPct)}% / {Math.round(100 - splitPct)}%</span></>
           )}
